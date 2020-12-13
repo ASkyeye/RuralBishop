@@ -44,3 +44,7 @@ C:\> RuralBishop.exe -p C:\Users\Rasta\Desktop\beacon.bin -i 14680
     |-> NtQueueApcThread
     |-> NtAlertResumeThread
 ```
+
+## Convert Shellcode
+
+Follow the instructions to convert your shellcode for this project here: https://github.com/rvrsh3ll/CPLResourceRunner/blob/master/README.md

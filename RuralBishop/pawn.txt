@@ -1,0 +1,1 @@
+﻿< Replace with shellcode per instructions in Readme.md >
